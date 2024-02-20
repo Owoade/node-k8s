@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodejs-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-app
+    spec:
+      containers:
+      - name: nodejs-app
+        image: autovendyrepo.azurecr.io/node-app:1
+        ports:
+        - containerPort: 5000
+        env:
+        - name: POSTGRES_URL
+          value: postgres://user:pass@postgres:5432/db
+        - name: NODE_ENV
+          value: development

@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-app
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: nodejs-app
+  type: LoadBalancer  # Specify type as LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodejs-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-app
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_URL
+          value: postgres://user:pass@postgres:5432/db
+        - name: NODE_ENV
+          value: development
+        image: autovendyrepo.azurecr.io/node-app:1
+        name: nodejs-app
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: regcred  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          value: user
+        - name: POSTGRES_PASSWORD
+          value: pass
+        - name: POSTGRES_DB
+          value: db
+        image: postgres
+        name: postgres
+        ports:
+        - containerPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis:latest
+        name: redis
+        ports:
+        - containerPort: 6379
